@@ -46,23 +46,21 @@ class MIRA(object):
     def compute_all_distances(self, data_loader):
         all_distances = []
         evaluation_range = self.get_evaluation_values(self.n_values)
-        for epsilon in evaluation_range:
-            with torch.no_grad():
-            
-                epsilon_distances = []
-                for data, target in data_loader:
-                    (x, y) = (data.to(self.device), target.to(self.device))
+        for epsilon in evaluation_range:            
+            epsilon_distances = []
+            for data, target in data_loader:
+                (x, y) = (data.to(self.device), target.to(self.device))
 
-                    x_tilde = perform_fgsm_attack(self.model, x, y, epsilon, self.loss_function, 
-                                        self.clamp, self.data_denorm, self.data_norm)
-                    out, feat_list = self.model(x_tilde, return_feature_list=True)
-                    feats = feat_list[self.layer_index]
-                    for i in set(target):
-                        class_feats = feats[y==i]
-                        class_distances = compute_mds(class_feats.detach().cpu().numpy(), self.class_means[i], self.class_precisions[i])
-                        epsilon_distances += class_distances.tolist()
-                epsilon_distances = np.array(epsilon_distances)
-                all_distances.append(epsilon_distances.mean())
+                x_tilde = perform_fgsm_attack(self.model, x, y, epsilon, self.loss_function, 
+                                    self.clamp, self.data_denorm, self.data_norm)
+                out, feat_list = self.model(x_tilde, return_feature_list=True)
+                feats = feat_list[self.layer_index]
+                for i in set(target.detach().cpu().numpy().tolist()):
+                    class_feats = feats[y==i]
+                    class_distances = compute_mds(class_feats.detach().cpu().numpy(), self.class_means[i], self.class_precisions[i])
+                    epsilon_distances += class_distances.tolist()
+            epsilon_distances = np.array(epsilon_distances)
+            all_distances.append(epsilon_distances.mean())
         return all_distances, evaluation_range
     
     def compute_mira_score(self, data_loader):

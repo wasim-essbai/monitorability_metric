@@ -25,7 +25,7 @@ def extract_activations(model, dataloader, layer_index, device):
 def compute_mds(feats, mean, precision):
     feats = np.atleast_2d(feats)
     distances = np.einsum('ij,jk,ik->i', feats - mean, precision, feats - mean)    
-    return distances if feats.shape[0] > 1 else distances[0]
+    return distances# if feats.shape[0] > 1 else distances
 
 def uniform_dist(x, ua, la):
     result = []
